@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kuma-data-pvc
+  namespace: uptime
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uptime-kuma
+  namespace: uptime
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: uptime-kuma
+  template:
+    metadata:
+      labels:
+        app: uptime-kuma
+    spec:
+      containers:
+      - name: uptime-kuma
+        image: louislam/uptime-kuma:latest
+        env:
+            # allows access from non-host devices
+          - name: UPTIME_KUMA_DISABLE_FRAME_SAMEORIGIN
+            value: "true"
+        ports:
+          - containerPort: 3001
+        volumeMounts:
+          - name: kuma-data
+            mountPath: /app/data
+      volumes:
+        - name: kuma-data
+          persistentVolumeClaim:
+            claimName: kuma-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uptime-kuma-service
+  namespace: uptime
+spec:
+  selector:
+    app: uptime-kuma
+  ports:
+  - port: 3001
+    targetPort: 3001
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: uptime-kuma-ingress
+  namespace: uptime
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: [CHOSEN_URL]
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: uptime-kuma-service
+            port:
+              number: 3001
