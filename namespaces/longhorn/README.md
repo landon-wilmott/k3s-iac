@@ -24,7 +24,13 @@ Before applying these manifests, ensure that your K3s environment meets the foll
 
 The configuration in this directory is declarative and contains the necessary Kubernetes resources to get Longhorn running.
 
-Before deploying the file ensure that you change [CHOSEN_URL] in the Ingress resource to your desired URL.
+Before deploying the file ensure that you:
+1. Change [CHOSEN_URL] in the Ingress resource to your desired URL. 
+2. Create longhorn-system namespace by running command:
+
+```bash
+kubectl create namespace longhorn-system
+```
 
 To deploy or update Longhorn, apply the YAML manifests located in this directory:
 
